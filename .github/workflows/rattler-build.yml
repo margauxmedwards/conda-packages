@@ -1,0 +1,102 @@
+name: rattler-build
+
+on:
+  push:
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  build-pangolin:
+    name: pangolin (${{ matrix.os }})
+    runs-on: ${{ matrix.runs_on }}
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: linux-64
+            runs_on: ubuntu-latest
+          - os: win-64
+            runs_on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Install rattler-build
+        uses: prefix-dev/rattler-build-action@v0.2.19
+        with:
+          rattler-build-version: "0.36.0"
+
+      - name: Build pangolin
+        shell: bash
+        run: |
+          rattler-build build \
+            --recipe pangolin-feedstock/recipe/recipe.yaml \
+            -m conda_build_config.yaml \
+            -c conda-forge \
+            --output-dir pangolin-feedstock/output
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pangolin-${{ matrix.os }}
+          path: pangolin-feedstock/output/
+          retention-days: 7
+
+  build-orbslam2:
+    name: orbslam2 (${{ matrix.os }})
+    runs-on: ${{ matrix.runs_on }}
+    needs: build-pangolin
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: linux-64
+            runs_on: ubuntu-latest
+          - os: win-64
+            runs_on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Install rattler-build
+        uses: prefix-dev/rattler-build-action@v0.2.19
+        with:
+          rattler-build-version: "0.36.0"
+
+      - name: Download pangolin artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: pangolin-${{ matrix.os }}
+          path: pangolin-feedstock/output
+
+      - name: Build ORB-SLAM2
+        shell: bash
+        run: |
+          rattler-build build \
+            --recipe ORB-SLAM2-VSLAM-LAB/recipe.yaml \
+            -m conda_build_config.yaml \
+            -c pangolin-feedstock/output \
+            -c conda-forge \
+            -c https://conda.anaconda.org/fontan \
+            -c https://conda.anaconda.org/tobiasrobotics \
+            --output-dir ORB-SLAM2-VSLAM-LAB/output
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: orbslam2-${{ matrix.os }}
+          path: ORB-SLAM2-VSLAM-LAB/output/
+          retention-days: 7
