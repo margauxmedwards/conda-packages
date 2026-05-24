@@ -1,7 +1,7 @@
 c_compiler:
   - gcc                        # [linux]
   - clang                      # [osx]
-  - vs2019                     # [win and x86_64]
+  - vs2022                     # [win and x86_64]
   - vs2022                     # [win and arm64]
 c_compiler_version:            # [unix]
   - 13                         # [linux]
@@ -25,7 +25,7 @@ c_stdlib_version:              # [unix]
 cxx_compiler:
   - gxx                        # [linux]
   - clangxx                    # [osx]
-  - vs2019                     # [win and x86_64]
+  - vs2022                     # [win and x86_64]
   - vs2022                     # [win and arm64]
 cxx_compiler_version:          # [unix]
   - 13                         # [linux]

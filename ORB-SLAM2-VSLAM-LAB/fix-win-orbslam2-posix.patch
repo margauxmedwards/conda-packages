@@ -1,0 +1,144 @@
+diff --git a/Examples/Monocular/vslamlab_orbslam2_mono.cpp b/Examples/Monocular/vslamlab_orbslam2_mono.cpp
+index b5b8db7..dfcfae4 100644
+--- a/Examples/Monocular/vslamlab_orbslam2_mono.cpp
++++ b/Examples/Monocular/vslamlab_orbslam2_mono.cpp
+@@ -5,9 +5,6 @@
+ #include<opencv2/core/core.hpp>
+ #include <yaml-cpp/yaml.h>
+ 
+-#include "sys/types.h"
+-#include "sys/sysinfo.h"
+-
+ #include<System.h>
+ 
+ using namespace std;
+diff --git a/Examples/RGB-D/vslamlab_orbslam2_rgbd.cpp b/Examples/RGB-D/vslamlab_orbslam2_rgbd.cpp
+index 95e1659..50417c1 100644
+--- a/Examples/RGB-D/vslamlab_orbslam2_rgbd.cpp
++++ b/Examples/RGB-D/vslamlab_orbslam2_rgbd.cpp
+@@ -4,9 +4,6 @@
+ #include<chrono>
+ #include<opencv2/core/core.hpp>
+ 
+-#include "sys/types.h"
+-#include "sys/sysinfo.h"
+-
+ #include<System.h>
+ 
+ using namespace std;
+diff --git a/Examples/Stereo/vslamlab_orbslam2_stereo.cpp b/Examples/Stereo/vslamlab_orbslam2_stereo.cpp
+index 6908379..d0b15f9 100644
+--- a/Examples/Stereo/vslamlab_orbslam2_stereo.cpp
++++ b/Examples/Stereo/vslamlab_orbslam2_stereo.cpp
+@@ -4,9 +4,6 @@
+ #include<chrono>
+ #include<opencv2/core/core.hpp>
+ 
+-#include "sys/types.h"
+-#include "sys/sysinfo.h"
+-
+ #include<System.h>
+ 
+ #include <sstream>
+diff --git a/include/OSSpecific.h b/include/OSSpecific.h
+new file mode 100644
+index 0000000..2e07d26
+--- /dev/null
++++ b/include/OSSpecific.h
+@@ -0,0 +1,35 @@
++#ifndef OSSPECIFIC_H
++#define OSSPECIFIC_H
++
++#if defined(_WIN32) || defined(_WIN64)
++#ifndef NOMINMAX
++#define NOMINMAX
++#endif
++#ifndef WIN32_LEAN_AND_MEAN
++#define WIN32_LEAN_AND_MEAN
++#endif
++#include <windows.h>
++#ifdef min
++#undef min
++#endif
++#ifdef max
++#undef max
++#endif
++
++static inline void usleep(__int64 usec)
++{
++    HANDLE timer;
++    LARGE_INTEGER ft;
++
++    ft.QuadPart = -(10 * usec);
++
++    timer = CreateWaitableTimer(NULL, TRUE, NULL);
++    SetWaitableTimer(timer, &ft, 0, NULL, NULL, 0);
++    WaitForSingleObject(timer, INFINITE);
++    CloseHandle(timer);
++}
++#else
++#include <unistd.h>
++#endif
++
++#endif
+diff --git a/include/System.h b/include/System.h
+index 283b38e..ac103c3 100644
+--- a/include/System.h
++++ b/include/System.h
+@@ -25,7 +25,7 @@
+ #include<string>
+ #include<thread>
+ #include<opencv2/core/core.hpp>
+-#include<unistd.h>
++#include "OSSpecific.h"
+ 
+ #include "Tracking.h"
+ #include "FrameDrawer.h"
+diff --git a/src/LocalMapping.cc b/src/LocalMapping.cc
+index 6c87a6e..b9eca82 100644
+--- a/src/LocalMapping.cc
++++ b/src/LocalMapping.cc
+@@ -19,6 +19,7 @@
+ */
+ 
+ #include "LocalMapping.h"
++#include "OSSpecific.h"
+ #include "LoopClosing.h"
+ #include "ORBmatcher.h"
+ #include "Optimizer.h"
+diff --git a/src/LoopClosing.cc b/src/LoopClosing.cc
+index f1e3dce..7b5c3bd 100644
+--- a/src/LoopClosing.cc
++++ b/src/LoopClosing.cc
+@@ -19,6 +19,7 @@
+ */
+ 
+ #include "LoopClosing.h"
++#include "OSSpecific.h"
+ 
+ #include "Sim3Solver.h"
+ 
+diff --git a/src/Tracking.cc b/src/Tracking.cc
+index d0acf63..750b009 100644
+--- a/src/Tracking.cc
++++ b/src/Tracking.cc
+@@ -20,6 +20,7 @@
+ 
+ 
+ #include "Tracking.h"
++#include "OSSpecific.h"
+ 
+ #include<opencv2/core/core.hpp>
+ #include<opencv2/features2d/features2d.hpp>
+diff --git a/src/Viewer.cc b/src/Viewer.cc
+index 9ad6ee4..9494617 100644
+--- a/src/Viewer.cc
++++ b/src/Viewer.cc
+@@ -19,6 +19,7 @@
+ */
+ 
+ #include "Viewer.h"
++#include "OSSpecific.h"
+ #include <pangolin/pangolin.h>
+ 
+ #include <mutex>

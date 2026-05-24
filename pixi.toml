@@ -1,0 +1,18 @@
+[workspace]
+name = "vslam-lab-conda-packages"
+version = "0.1.0"
+description = "Pixi environment for building VSLAM-LAB conda recipes"
+channels = ["https://prefix.dev/conda-forge"]
+platforms = ["win-64"]
+
+[tasks]
+build-pangolin = { cmd = "rattler-build build --recipe recipe/recipe.yaml -m ../conda_build_config.yaml -c https://prefix.dev/conda-forge --output-dir ./output", cwd = "pangolin-feedstock" }
+build-orbslam2 = { cmd = "rattler-build build -m ../conda_build_config.yaml -c ../pangolin-feedstock/output -c https://prefix.dev/conda-forge -c https://conda.anaconda.org/fontan -c https://conda.anaconda.org/tobiasrobotics --output-dir ./output", cwd = "ORB-SLAM2-VSLAM-LAB" }
+build-all = { depends-on = ["build-pangolin", "build-orbslam2"] }
+
+[dependencies]
+rattler-build = "*"
+cmake = "*"
+ninja = "*"
+pkg-config = "*"
+git = "*"

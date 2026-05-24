@@ -1,0 +1,35 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 5b8434f..25efea9 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -73,13 +73,26 @@ target_include_directories(${PROJECT_NAME} PUBLIC
+ )
+ 
+ # Link dependencies
+ target_link_libraries(${PROJECT_NAME}
+-    PUBLIC ${OpenCV_LIBS}
+-    PUBLIC Eigen3::Eigen
+-    PUBLIC yaml-cpp::yaml-cpp
+-    ${Pangolin_LIBRARIES}
+-    PUBLIC DBoW2
+-    PUBLIC g2o
+-)
++    PUBLIC ${OpenCV_LIBS}
++    PUBLIC Eigen3::Eigen
++    PUBLIC yaml-cpp::yaml-cpp
++    ${Pangolin_LIBRARIES}
++)
+
+ if(WIN32)
+ target_link_libraries(${PROJECT_NAME}
+	 PUBLIC ${PROJECT_SOURCE_DIR}/Thirdparty/DBoW2/lib/DBoW2.lib
+	 PUBLIC ${PROJECT_SOURCE_DIR}/Thirdparty/g2o/lib/g2o.lib
+ )
+ else()
+ target_link_libraries(${PROJECT_NAME}
+	 PUBLIC DBoW2
+	 PUBLIC g2o
+ )
+ endif()
+ 
+ # Example executables

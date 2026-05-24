@@ -1,0 +1,40 @@
+diff --git a/Thirdparty/DBoW2/CMakeLists.txt b/Thirdparty/DBoW2/CMakeLists.txt
+index 73618ad..f0ef001 100644
+--- a/Thirdparty/DBoW2/CMakeLists.txt
++++ b/Thirdparty/DBoW2/CMakeLists.txt
+@@ -35,8 +35,13 @@ set(SRCS_DUTILS
+   DUtils/Random.cpp
+   DUtils/Timestamp.cpp)
+ 
+-# Create shared library
+-add_library(${PROJECT_NAME} SHARED ${SRCS_DBOW2} ${SRCS_DUTILS} )
++set(DBOW2_LIB_TYPE SHARED)
++if(WIN32)
++  set(DBOW2_LIB_TYPE STATIC)
++endif()
++
++# Build static on Windows to avoid missing dll-exported data symbols
++add_library(${PROJECT_NAME} ${DBOW2_LIB_TYPE} ${SRCS_DBOW2} ${SRCS_DUTILS})
+ 
+ # Apply warnings and optimization flags
+ target_link_libraries(${PROJECT_NAME} PRIVATE dbow2_warnings)
+diff --git a/Thirdparty/g2o/CMakeLists.txt b/Thirdparty/g2o/CMakeLists.txt
+index c9fb6d4..4ec6171 100644
+--- a/Thirdparty/g2o/CMakeLists.txt
++++ b/Thirdparty/g2o/CMakeLists.txt
+@@ -74,8 +74,13 @@ set(G2O_SOURCE_FILES
+         g2o/stuff/property.cpp
+ )
+ 
+-# Create shared library
+-add_library(${PROJECT_NAME} SHARED ${G2O_SOURCE_FILES})
++set(G2O_LIB_TYPE SHARED)
++if(WIN32)
++  set(G2O_LIB_TYPE STATIC)
++endif()
++
++# Build static on Windows to avoid missing dll-exported data symbols
++add_library(${PROJECT_NAME} ${G2O_LIB_TYPE} ${G2O_SOURCE_FILES})
+ 
+ # Apply warnings and optimization flags
+ target_link_libraries(${PROJECT_NAME} PRIVATE g2o_warnings)

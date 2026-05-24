@@ -1,0 +1,4 @@
+[submodule "pangolin-feedstock"]
+	path = pangolin-feedstock
+	url = https://github.com/Tobias-Fischer/pangolin-feedstock.git
+	branch = margauxmedwards/windows-build

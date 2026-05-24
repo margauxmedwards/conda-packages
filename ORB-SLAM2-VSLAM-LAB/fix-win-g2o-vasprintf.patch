@@ -1,0 +1,57 @@
+diff --git a/Thirdparty/g2o/g2o/stuff/string_tools.cpp b/Thirdparty/g2o/g2o/stuff/string_tools.cpp
+index 0a4f60a..a63cfa3 100644
+--- a/Thirdparty/g2o/g2o/stuff/string_tools.cpp
++++ b/Thirdparty/g2o/g2o/stuff/string_tools.cpp
+@@ -45,6 +45,34 @@ namespace g2o {
+ 
+ using namespace std;
+ 
++static int g2oVasprintf(char** strp, const char* fmt, va_list ap)
++{
++#if defined(_MSC_VER)
++  va_list ap_len;
++  va_copy(ap_len, ap);
++  const int len = _vscprintf(fmt, ap_len);
++  va_end(ap_len);
++  if (len < 0)
++    return -1;
++
++  *strp = static_cast<char*>(malloc(static_cast<size_t>(len) + 1));
++  if (*strp == NULL)
++    return -1;
++
++  va_list ap_write;
++  va_copy(ap_write, ap);
++  const int written = vsnprintf(*strp, static_cast<size_t>(len) + 1, fmt, ap_write);
++  va_end(ap_write);
++  if (written < 0) {
++    free(*strp);
++    *strp = NULL;
++  }
++  return written;
++#else
++  return vasprintf(strp, fmt, ap);
++#endif
++}
++
+ std::string trim(const std::string& s)
+ {
+   if(s.length() == 0)
+@@ -97,7 +125,7 @@ std::string formatString(const char* fmt, ...)
+   char* auxPtr = NULL;
+   va_list arg_list;
+   va_start(arg_list, fmt);
+-  int numChar = vasprintf(&auxPtr, fmt, arg_list);
++  int numChar = g2oVasprintf(&auxPtr, fmt, arg_list);
+   va_end(arg_list);
+   string retString;
+   if (numChar != -1)
+@@ -114,7 +142,7 @@ int strPrintf(std::string& str, const char* fmt, ...)
+   char* auxPtr = NULL;
+   va_list arg_list;
+   va_start(arg_list, fmt);
+-  int numChars = vasprintf(&auxPtr, fmt, arg_list);
++  int numChars = g2oVasprintf(&auxPtr, fmt, arg_list);
+   va_end(arg_list);
+   str = auxPtr;
+   free(auxPtr);

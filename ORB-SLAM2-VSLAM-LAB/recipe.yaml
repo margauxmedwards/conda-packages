@@ -9,11 +9,87 @@ package:
 source:
   - git: https://github.com/VSLAM-LAB/ORB-SLAM2-VSLAM-LAB
     rev: 053f26faded2f824ff5297a09fa5a03e19c1a4ae
+    target_directory: src
+    patches:
+      - fix-win-stdint-gcc.patch
+      - fix-win-orbslam2-stdint-gcc.patch
+      - fix-win-mappoint-vla.patch
+      - fix-win-g2o-tr1-unordered-map.patch
+      - fix-win-g2o-posix-compat.patch
+      - fix-win-g2o-vasprintf.patch
+      - fix-win-find-threads.patch
+      - fix-win-orbslam2-posix.patch
+      - fix-win-orbslam2-link-thirdparty.patch
+      - fix-win-thirdparty-static-libs.patch
 
 build:
   number: 0
-  skip: win
-  script: build.sh
+  script:
+    - if: win
+      then: |
+        if not exist "%SRC_DIR%\build" mkdir "%SRC_DIR%\build"
+
+        cmake "%SRC_DIR%\src\Thirdparty\DBoW2" ^
+          -G "Ninja" ^
+          -B "%SRC_DIR%\build\DBoW2" ^
+          -DCMAKE_BUILD_TYPE=Release ^
+          -DCMAKE_CXX_FLAGS="/EHsc /bigobj /Zm200 /W0" ^
+          -DCMAKE_PREFIX_PATH="%PREFIX%\Library;%PREFIX%" ^
+          -DCMAKE_INSTALL_PREFIX="%PREFIX%\Library" ^
+          -DCMAKE_WINDOWS_EXPORT_ALL_SYMBOLS=ON
+        if errorlevel 1 exit /b 1
+
+        cmake --build "%SRC_DIR%\build\DBoW2" --config Release -- -j1
+        if errorlevel 1 exit /b 1
+
+        cmake --install "%SRC_DIR%\build\DBoW2" --config Release
+        if errorlevel 1 exit /b 1
+
+        cmake "%SRC_DIR%\src\Thirdparty\g2o" ^
+          -G "Ninja" ^
+          -B "%SRC_DIR%\build\g2o" ^
+          -DCMAKE_BUILD_TYPE=Release ^
+          -DCMAKE_CXX_FLAGS="/EHsc /bigobj /Zm200 /W0" ^
+          -DCMAKE_PREFIX_PATH="%PREFIX%\Library;%PREFIX%" ^
+          -DCMAKE_INSTALL_PREFIX="%PREFIX%\Library" ^
+          -DCMAKE_WINDOWS_EXPORT_ALL_SYMBOLS=ON
+        if errorlevel 1 exit /b 1
+
+        cmake --build "%SRC_DIR%\build\g2o" --config Release -- -j1
+        if errorlevel 1 exit /b 1
+
+        cmake --install "%SRC_DIR%\build\g2o" --config Release
+        if errorlevel 1 exit /b 1
+
+        cmake "%SRC_DIR%\src" ^
+          -G "Ninja" ^
+          -B "%SRC_DIR%\build\ORB-SLAM2" ^
+          -DCMAKE_BUILD_TYPE=Release ^
+          -DCMAKE_CXX_FLAGS="/EHsc /bigobj /Zm200 /W1" ^
+          -DCMAKE_PREFIX_PATH="%PREFIX%\Library;%PREFIX%" ^
+          -DCMAKE_INSTALL_PREFIX="%PREFIX%\Library" ^
+          -DCMAKE_WINDOWS_EXPORT_ALL_SYMBOLS=ON
+        if errorlevel 1 exit /b 1
+
+        cmake --build "%SRC_DIR%\build\ORB-SLAM2" --config Release -- -j1
+        if errorlevel 1 exit /b 1
+
+        if not exist "%PREFIX%\Library\bin" mkdir "%PREFIX%\Library\bin"
+        if not exist "%PREFIX%\Library\lib" mkdir "%PREFIX%\Library\lib"
+        if not exist "%PREFIX%\Library\include\ORB_SLAM2" mkdir "%PREFIX%\Library\include\ORB_SLAM2"
+
+        for /r "%SRC_DIR%\build\ORB-SLAM2" %%F in (*.dll) do copy /Y "%%F" "%PREFIX%\Library\bin\"
+        for /r "%SRC_DIR%\build\ORB-SLAM2" %%F in (*.lib) do copy /Y "%%F" "%PREFIX%\Library\lib\"
+        for /r "%SRC_DIR%\build\ORB-SLAM2" %%F in (*.exe) do copy /Y "%%F" "%PREFIX%\Library\bin\"
+        if exist "%SRC_DIR%\src\bin" (
+          for /r "%SRC_DIR%\src\bin" %%F in (*.dll) do copy /Y "%%F" "%PREFIX%\Library\bin\"
+          for /r "%SRC_DIR%\src\bin" %%F in (*.exe) do copy /Y "%%F" "%PREFIX%\Library\bin\"
+        )
+
+        xcopy /E /I /Y "%SRC_DIR%\src\include" "%PREFIX%\Library\include\ORB_SLAM2"
+        if errorlevel 1 exit /b 1
+    - if: not win
+      then: build.sh
 
 requirements:
   build:
@@ -22,34 +98,38 @@ requirements:
     - ${{ stdlib('c') }}
     - ninja
     - cmake
-    - make
-    - pkg-config  
+    - if: not win
+      then:
+        - make
+        - pkg-config
   host:
-    - libgl-devel
-    - libegl-devel
-    - libglvnd-devel
-    - libopengl-devel
-    - xorg-libxext
-    - xorg-libx11
-    - xorg-libxfixes
-    - xorg-libxrender
-    - xorg-libice
-    - xorg-libsm
-    - xorg-libxdmcp
-    - xorg-libxau
-    - eigen >=3.4.0,<3.5.0
+    - if: linux
+      then:
+        - libgl-devel
+        - libegl-devel
+        - libglvnd-devel
+        - libopengl-devel
+        - xorg-libxfixes
+        - xorg-libxrender
+        - xorg-libice
+        - xorg-libsm
+        - xorg-libxdmcp
+        - xorg-libxau
+        - xorg-libx11
+        - xorg-libxext
+    - eigen
+    - eigen-abi-devel
     - yaml-cpp
-    - opencv >=4.10.0,<5 
-    - fontan::pangolin
+    - libopencv
+    - pangolin
   run:
-    - eigen >=3.4.0,<3.5.0
+    - pangolin
+    - libopencv
     - yaml-cpp
-    - opencv >=4.10.0,<5
-    - fontan::pangolin
 
 about:
   license: GPL-3.0-only
-  license_file: LICENSE.txt
+  license_file: src/LICENSE.txt
   summary: ORB-SLAM2 is a real-time SLAM library for Monocular, Stereo and RGB-D cameras. 
   homepage: https://github.com/raulmur/ORB_SLAM2
 
